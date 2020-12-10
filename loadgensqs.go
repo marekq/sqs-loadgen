@@ -22,10 +22,10 @@ func main() {
 	// retrieve sqs queue url from argument 1
 	if len(os.Args) > 1 {
 		urlqueue = os.Args[1]
-		fmt.Println("INFO - found SQS queue argument of " + urlqueue + "\n")
+		fmt.Println("INFO - found SQS queue argument of " + urlqueue)
 
 	} else {
-		fmt.Println("ERROR - no SQS message queue specifiec in argument, exiting \n")
+		fmt.Println("ERROR - no SQS message queue specifiec in argument, exiting")
 		os.Exit(3)
 	}
 
@@ -33,11 +33,11 @@ func main() {
 	if len(os.Args) > 2 {
 		msgcstr = os.Args[2]
 		msgcint, _ = strconv.Atoi(msgcstr)
-		fmt.Println("INFO - found count argument of " + msgcstr + " messages\n")
+		fmt.Println("INFO - found count argument of " + msgcstr + " messages")
 
 	} else {
-		fmt.Println("WARNING - no SQS message count specified in argument, using default value of 1000\n")
 		msgcint = 1000
+		fmt.Println("WARNING - no SQS message count specified in argument, using default value of 1000")
 	}
 
 	if len(os.Args) > 3 {
@@ -45,8 +45,8 @@ func main() {
 		fmt.Println("INFO - found count per message argument of " + os.Args[3] + " bytes\n")
 
 	} else {
-		fmt.Println("WARNING - no byte count specified in argument, using default value of 100 bytes\n")
 		bytecount = 100
+		fmt.Println("WARNING - no byte count specified in argument, using default value of 100 bytes")
 	}
 
 	// print message with to be sent amount of messages and sqs queue url
@@ -73,16 +73,18 @@ func main() {
 
 			// create an entry per message
 			message := &sqs.SendMessageBatchRequestEntry{
-				Id:          aws.String(`test_` + strconv.Itoa(totalCount)),
+				Id: aws.String(`test_` + strconv.Itoa(totalCount+i)),
+
+				// repeat the payload to meet the set byte size
 				MessageBody: aws.String(strings.Repeat(msgs[i], bytecount)),
 			}
-
-			// increase total count
-			totalCount++
 
 			// append the batch message
 			msgBatch = append(msgBatch, message)
 		}
+
+		// increase total count by 10
+		totalCount = totalCount + 10
 
 		// set sqs batch entries and queue url from argv
 		params := &sqs.SendMessageBatchInput{
