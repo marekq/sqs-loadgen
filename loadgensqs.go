@@ -18,8 +18,6 @@ func main() {
 
 	// retrieve amount of messages to send from argument 2
 	msgcstr := os.Args[2]
-
-	// convert message count string to int
 	msgcint, _ := strconv.Atoi(msgcstr)
 
 	// print message with to be sent amount of messages and sqs queue url
@@ -30,29 +28,53 @@ func main() {
 		SharedConfigState: session.SharedConfigEnable,
 	}))
 
-	// create a session with sqs
+	// create a session with sqs and set counter to 0
 	svc := sqs.New(sess)
+	totalCount := 0
 
-	// create trace for every message group
-	for tot := 1; tot < (msgcint); tot++ {
+	// start batch write
+	for x := 0; totalCount < (msgcint); x++ {
 
-		// send one message to the queue
-		_, err := svc.SendMessage(&sqs.SendMessageInput{
-			MessageBody: aws.String(msgcstr),
-			QueueUrl:    aws.String(urlqueue),
-		})
+		// set the message payloads
+		msgs := []string{"0", "1", "2", "3", "4", "5", "6", "7", "8", "9"}
+		var msgBatch []*sqs.SendMessageBatchRequestEntry
 
-		// print an error if message sending failed
+		// iterate over the 10 messages
+		for i := 0; i < len(msgs); i++ {
+
+			// create an entry per message
+			message := &sqs.SendMessageBatchRequestEntry{
+				Id:          aws.String(`test_` + strconv.Itoa(i)),
+				MessageBody: aws.String(msgs[i]),
+			}
+
+			// increase total count
+			totalCount++
+
+			// append the batch message
+			msgBatch = append(msgBatch, message)
+		}
+
+		// set sqs batch entries and queue url from argv
+		params := &sqs.SendMessageBatchInput{
+			Entries:  msgBatch,
+			QueueUrl: &urlqueue,
+		}
+
+		// send the batch message
+		_, err := svc.SendMessageBatch(params)
+
+		// if error found in sending, print it
 		if err != nil {
 			fmt.Println(err)
 		}
 
-		if tot%10 == 0 {
-			fmt.Println("sent " + strconv.Itoa(tot) + " messages ")
+		// print status per 1000 messages
+		if totalCount%1000 == 0 {
+			fmt.Println("sent " + strconv.Itoa(totalCount) + " messages ")
 		}
 	}
 
-	// print total messages completed
-	fmt.Println("finished - sent " + msgcstr + " messages to queue")
-
+	// final - print total messages completed
+	fmt.Println("finished - sent " + strconv.Itoa(totalCount) + " messages to queue")
 }
