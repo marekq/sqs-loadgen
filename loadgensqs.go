@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -15,14 +16,16 @@ func main() {
 
 	urlqueue := ""
 	msgcstr := ""
+	bytecount := 0
 	msgcint := 0
 
 	// retrieve sqs queue url from argument 1
 	if len(os.Args) > 1 {
 		urlqueue = os.Args[1]
+		fmt.Println("INFO - found SQS queue argument of " + urlqueue + "\n")
 
 	} else {
-		fmt.Println("ERROR - no SQS message queue specifiec in argument, exiting")
+		fmt.Println("ERROR - no SQS message queue specifiec in argument, exiting \n")
 		os.Exit(3)
 	}
 
@@ -30,15 +33,24 @@ func main() {
 	if len(os.Args) > 2 {
 		msgcstr = os.Args[2]
 		msgcint, _ = strconv.Atoi(msgcstr)
-		fmt.Println("found message count argument of " + msgcstr)
+		fmt.Println("INFO - found count argument of " + msgcstr + " messages\n")
 
 	} else {
-		fmt.Println("WARNING - no SQS message count specifiec in argument, using default value of 1000")
+		fmt.Println("WARNING - no SQS message count specified in argument, using default value of 1000\n")
 		msgcint = 1000
 	}
 
+	if len(os.Args) > 3 {
+		bytecount, _ = strconv.Atoi(os.Args[3])
+		fmt.Println("INFO - found count per message argument of " + os.Args[3] + " bytes\n")
+
+	} else {
+		fmt.Println("WARNING - no byte count specified in argument, using default value of 100 bytes\n")
+		bytecount = 100
+	}
+
 	// print message with to be sent amount of messages and sqs queue url
-	fmt.Println("start sending " + msgcstr + " messages to " + urlqueue)
+	fmt.Println("start sending " + msgcstr + " messages to " + urlqueue + "\n")
 
 	// setup a session
 	sess := session.Must(session.NewSessionWithOptions(session.Options{
@@ -61,8 +73,8 @@ func main() {
 
 			// create an entry per message
 			message := &sqs.SendMessageBatchRequestEntry{
-				Id:          aws.String(`test_` + strconv.Itoa(i)),
-				MessageBody: aws.String(msgs[i]),
+				Id:          aws.String(`test_` + strconv.Itoa(totalCount)),
+				MessageBody: aws.String(strings.Repeat(msgs[i], bytecount)),
 			}
 
 			// increase total count
@@ -95,7 +107,7 @@ func main() {
 
 		// print status per 1000 messages
 		if totalCount%modulo == 0 {
-			fmt.Println("sent " + strconv.Itoa(totalCount) + " messages ")
+			fmt.Println("sent " + strconv.Itoa(totalCount) + " messages of bytesize " + strconv.Itoa(bytecount))
 		}
 	}
 
