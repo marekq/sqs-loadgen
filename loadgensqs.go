@@ -13,12 +13,29 @@ import (
 // main function
 func main() {
 
-	// retrieve sqs queue url from argument 1
-	urlqueue := os.Args[1]
+	urlqueue := ""
+	msgcstr := ""
+	msgcint := 0
 
-	// retrieve amount of messages to send from argument 2
-	msgcstr := os.Args[2]
-	msgcint, _ := strconv.Atoi(msgcstr)
+	// retrieve sqs queue url from argument 1
+	if len(os.Args) > 1 {
+		urlqueue = os.Args[1]
+
+	} else {
+		fmt.Println("ERROR - no SQS message queue specifiec in argument, exiting")
+		os.Exit(3)
+	}
+
+	// retrieve message count from argument 2
+	if len(os.Args) > 2 {
+		msgcstr = os.Args[2]
+		msgcint, _ = strconv.Atoi(msgcstr)
+		fmt.Println("found message count argument of " + msgcstr)
+
+	} else {
+		fmt.Println("WARNING - no SQS message count specifiec in argument, using default value of 1000")
+		msgcint = 1000
+	}
 
 	// print message with to be sent amount of messages and sqs queue url
 	fmt.Println("start sending " + msgcstr + " messages to " + urlqueue)
@@ -69,8 +86,15 @@ func main() {
 			fmt.Println(err)
 		}
 
+		modulo := 1000
+		if msgcint < 1000 {
+			modulo = 10
+		} else if msgcint < 5000 {
+			modulo = 100
+		}
+
 		// print status per 1000 messages
-		if totalCount%1000 == 0 {
+		if totalCount%modulo == 0 {
 			fmt.Println("sent " + strconv.Itoa(totalCount) + " messages ")
 		}
 	}
