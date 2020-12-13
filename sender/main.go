@@ -14,48 +14,27 @@ import (
 // main function
 func main() {
 
-	urlqueue := ""
-	msgcstr := ""
-	bytecount := 0
-	msgcint := 0
+	// get lambda environment variables for sqs queue
+	urlqueue := os.Getenv("sqsqueue")
 
-	// retrieve sqs queue url from argument 1
-	if len(os.Args) > 1 {
-		urlqueue = os.Args[1]
-		fmt.Println("INFO - found SQS queue argument of " + urlqueue)
+	// get message count to send
+	msgcstr := os.Getenv("messagecount")
+	msgcint, _ := strconv.Atoi(msgcstr)
 
-	} else {
-		fmt.Println("ERROR - no SQS message queue specifiec in argument, exiting")
-		os.Exit(3)
-	}
+	// get per message byte count
+	bytecountstr := os.Getenv("messagebytes")
+	bytecountint, _ := strconv.Atoi(bytecountstr)
 
-	// retrieve message count from argument 2
-	if len(os.Args) > 2 {
-		msgcstr = os.Args[2]
-		msgcint, _ = strconv.Atoi(msgcstr)
-		fmt.Println("INFO - found count argument of " + msgcstr + " messages")
-
-	} else {
-		msgcint = 1000
-		fmt.Println("WARNING - no SQS message count specified in argument, using default value of 1000")
-	}
-
-	if len(os.Args) > 3 {
-		bytecount, _ = strconv.Atoi(os.Args[3])
-		fmt.Println("INFO - found count per message argument of " + os.Args[3] + " bytes\n")
-
-	} else {
-		bytecount = 100
-		fmt.Println("WARNING - no byte count specified in argument, using default value of 100 bytes")
-	}
+	// get aws region
+	region := os.Getenv("AWS_REGION")
 
 	// print message with to be sent amount of messages and sqs queue url
-	fmt.Println("start sending " + msgcstr + " messages to " + urlqueue + "\n")
+	fmt.Println("start sending " + msgcstr + " messages to " + urlqueue + " with payload size " + bytecountstr + " bytes\n")
 
 	// setup a session
-	sess := session.Must(session.NewSessionWithOptions(session.Options{
-		SharedConfigState: session.SharedConfigEnable,
-	}))
+	sess := session.Must(session.NewSession(&aws.Config{
+		Region: aws.String(region)},
+	))
 
 	// create a session with sqs and set counter to 0
 	svc := sqs.New(sess)
@@ -76,7 +55,7 @@ func main() {
 				Id: aws.String(`test_` + strconv.Itoa(totalCount+i)),
 
 				// repeat the payload to meet the set byte size
-				MessageBody: aws.String(strings.Repeat(msgs[i], bytecount)),
+				MessageBody: aws.String(strings.Repeat(msgs[i], bytecountint)),
 			}
 
 			// append the batch message
@@ -109,7 +88,7 @@ func main() {
 
 		// print status per 1000 messages
 		if totalCount%modulo == 0 {
-			fmt.Println("sent " + strconv.Itoa(totalCount) + " messages of bytesize " + strconv.Itoa(bytecount))
+			fmt.Println("sent " + strconv.Itoa(totalCount) + " messages of bytesize " + bytecountstr)
 		}
 	}
 

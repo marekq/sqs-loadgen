@@ -32,7 +32,7 @@ Resources:
     Type: 'AWS::Serverless::Function'
     Properties:
       CodeUri: sender/
-      Handler: loadgen
+      Handler: sender
       Tracing: Active
       Runtime: go1.x
       Description: '.'
@@ -43,6 +43,6 @@ Resources:
             QueueName: !GetAtt BatchSQS10k.QueueName
       Environment:
         Variables:
-          sqsqueue: !GetAtt BatchSQS10k.Arn
+          sqsqueue: !Ref BatchSQS10k
           messagebytes: 100
           messagecount: 10000
