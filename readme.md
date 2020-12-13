@@ -1,22 +1,20 @@
 sqs-loadgen
 ===========
 
-Generate random messages to your SQS queue using Go. 
+Generate random messages to your SQS queue using Go. The stack deploys a Lambda SQS generator, a Lambda SQS receiver and an SQS queue. 
 
 
 Usage
 -----
 
-You can run the code on your local machine or in a Lambda function as follows;
+You can deploy the SQS generator and receiver using AWS SAM. Run the following commands on your local machine to build and deploy the stack to AWS;
 
 ```
-go run loadgensqs.go https://sqs.eu-west-1.amazonaws.com/1234567890/sqsqueue 10000 100
+make
+sam deploy -g
 ```
 
-
-```
-go run loadgensqs.go https://sqs.<region>.amazonaws.com/<account>/<queuename> <optional message count> <optional message byte size>
-```
+After the stack is deployed, you can invoke the 'SQSSender' Lambda to generate traffic. 
 
 
 Contact

@@ -1,1 +1,4 @@
 sqs-loadgen
+.aws-sam/
+*go.sum*
+samconfig.toml

@@ -1,0 +1,48 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: 'AWS::Serverless-2016-10-31'
+Description: An AWS Serverless Specification template describing your function.
+    
+Resources:
+  
+  # create sqs queue
+  BatchSQS10k:
+    Type: AWS::SQS::Queue
+
+  # sqs receiver lambda in python
+  SQSReceiver:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Handler: receive.handler
+      CodeUri: receiver/
+      Tracing: Active
+      Runtime: python3.8
+      Events:
+        S3PathEvent:
+          Type: SQS
+          Properties:
+            Queue: !GetAtt BatchSQS10k.Arn
+            BatchSize: 10000
+            MaximumBatchingWindowInSeconds: 60
+      Description: '.'
+      MemorySize: 512
+      Timeout: 5
+
+  # sqs message generator lambda in go
+  SQSSender:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      CodeUri: sender/
+      Handler: loadgen
+      Tracing: Active
+      Runtime: go1.x
+      Description: '.'
+      MemorySize: 512
+      Timeout: 180
+      Policies:
+        - SQSSendMessagePolicy:
+            QueueName: !GetAtt BatchSQS10k.QueueName
+      Environment:
+        Variables:
+          sqsqueue: !GetAtt BatchSQS10k.Arn
+          messagebytes: 100
+          messagecount: 10000
