@@ -1,7 +1,6 @@
 .PHONY: build
 build:
-	sam build SQSSender 
-	sam build -u SQSReceiver
+	sam build --parallel --cached
 
 .PHONY: deploy
 deploy:
