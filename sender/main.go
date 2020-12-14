@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"strconv"
@@ -11,13 +12,18 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sqs"
+	"github.com/aws/aws-xray-sdk-go/xray"
 )
 
 // main function
-func handler() {
+func handler(ctx context.Context) {
+
+	// create xray handler segment
+	_, Seg1 := xray.BeginSubsegment(ctx, "handler")
 
 	// get lambda environment variables for sqs queue
 	urlqueue := os.Getenv("sqsqueue")
+	os.Setenv("AWS_XRAY_CONTEXT_MISSING", "LOG_ERROR")
 
 	// get message count to send
 	msgcstr := os.Getenv("messagecount")
@@ -44,6 +50,10 @@ func handler() {
 
 	// create a session with sqs and set counter to 0
 	svc := sqs.New(sess)
+	xray.AWS(svc.Client)
+
+	// close handler subsegment
+	Seg1.Close(nil)
 
 	totalCount := 0
 
@@ -78,8 +88,10 @@ func handler() {
 			QueueUrl: &urlqueue,
 		}
 
-		// send the batch message
-		_, err := svc.SendMessageBatch(params)
+		// send the batch message traced with xray
+		_, Seg2 := xray.BeginSubsegment(ctx, "handler")
+		_, err := svc.SendMessageBatchWithContext(ctx, params)
+		Seg2.Close(nil)
 
 		// if error found in sending, print it
 		if err != nil {
@@ -112,6 +124,7 @@ func handler() {
 
 	// final - print total messages completed
 	fmt.Println("finished - sent " + strconv.Itoa(totalCount) + " messages to queue")
+
 }
 
 func main() {

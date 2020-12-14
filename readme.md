@@ -7,7 +7,7 @@ Generate random messages to your SQS queue using Go to test SQS batching feature
 Usage
 -----
 
-You can deploy the SQS generator and receiver using AWS SAM. Run the following commands on your local machine to build and deploy the stack to AWS;
+You can deploy the SQS generator and receiver using AWS SAM. Run the following commands on your local machine to build and deploy the stack to AWS.
 
 ```
 make init       (run the first time to create the SAM config)

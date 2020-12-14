@@ -45,4 +45,4 @@ Resources:
         Variables:
           sqsqueue: !Ref BatchSQS10k
           messagebytes: 1
-          messagecount: 100000
+          messagecount: 10000
