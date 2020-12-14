@@ -116,8 +116,14 @@ func handler(ctx context.Context) {
 			// skip logs for first two seconds as these can have skewed metrics
 			if diffts > 2 {
 
+				// calculate messages sent / second
 				sendrate := totalCount / diffts
-				fmt.Println("sent " + strconv.Itoa(totalCount) + " messages (" + strconv.Itoa(sendrate) + "/sec) of " + bytecountstr + " bytes with memory size " + lambdamemory + " MB in " + strconv.Itoa(diffts) + " sec")
+
+				// calculate percentage completed
+				percentage := int((totalCount * 100) / msgcint)
+
+				// print log entry
+				fmt.Println("sent " + strconv.Itoa(totalCount) + "/" + msgcstr + " messages (" + strconv.Itoa(percentage) + "% - " + strconv.Itoa(sendrate) + "/sec) of " + bytecountstr + " bytes with memory size " + lambdamemory + " MB in " + strconv.Itoa(diffts) + " sec")
 			}
 		}
 	}
