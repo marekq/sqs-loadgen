@@ -1,8 +1,10 @@
 from sys import getsizeof
+import json
 
 def handler(event, context):
     
-    print('sqs messages received: ' + str(len(event['Records'])))
-    print('lambda input size: ' + str(getsizeof(str(event))) + ' bytes')
-    print('message payload: ' + str(getsizeof(event['Records'][0]['body'])) + ' bytes')
-    print('payload content: ' + event['Records'][0]['body'])
+    jsondoc =  { "messages" : str(len(event['Records'])), "lambda_input_bytes" : getsizeof(str(event)), "payload_size_bytes" : str(getsizeof(event['Records'][0]['body'])), "payload_sample_msg" : event['Records'][0]['body']}
+    out = json.dumps(jsondoc)
+
+    print(jsondoc)
+    return jsondoc
